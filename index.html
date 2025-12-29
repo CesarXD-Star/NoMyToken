@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RitaCoin Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#0f1220; color:#eaeaf0; }
+    header { padding:16px 24px; background:#14183a; display:flex; justify-content:space-between; align-items:center; }
+    button { background:#5b6cff; border:none; color:white; padding:10px 14px; border-radius:6px; cursor:pointer; }
+    button.secondary { background:#2a2f6b; }
+    .container { padding:24px; }
+    .tabs { display:flex; gap:12px; margin-bottom:16px; }
+    .card { background:#171b45; border-radius:10px; padding:16px; margin-bottom:16px; }
+    .wallet { max-height:220px; overflow-y:auto; }
+    .token { display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #262b66; }
+    .muted { color:#9aa0ff; }
+    input { width:100%; padding:10px; border-radius:6px; border:1px solid #2a2f6b; background:#0f1220; color:white; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+<header>
+  <strong>RitaCoin</strong>
+  <div>
+    <button id="loginGoogle">Login with Google</button>
+    <button id="loginGithub" class="secondary">Login with GitHub</button>
+    <button id="logout" class="hidden">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button onclick="showTab('wallet')">Wallets</button>
+    <button onclick="showTab('mining')">Mining</button>
+  </div>
+
+  <!-- WALLET TAB -->
+  <div id="wallet" class="card">
+    <h2>Main Wallet</h2>
+    <p class="muted">Wallet is auto-created on first login</p>
+    <div class="wallet">
+      <div class="token">
+        <span>RitaCoin</span>
+        <strong id="balance">0.0000 RTC</strong>
+      </div>
+      <div class="token">
+        <span>Your Wallet Address</span>
+        <strong id="walletAddress">—</strong>
+      </div>
+      <!-- Empty space / scroll -->
+      <div style="padding:16px" class="muted">
+        Add your token for <strong>$1 USD</strong><br />
+        Contact me at: <strong>email@example.com</strong><br />
+        Payment method: <strong>Crypto only</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINING TAB -->
+  <div id="mining" class="card hidden">
+    <h2>Mining</h2>
+    <p class="muted">Buy hash power using RitaCoin</p>
+    <label>Amount of hash power</label>
+    <input placeholder="e.g. 100 H/s" />
+    <button style="margin-top:12px">Buy with RitaCoin</button>
+  </div>
+</div>
+
+<!-- Firebase Auth (for GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+  // TODO: replace with your Firebase project config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+  const githubProvider = new firebase.auth.GithubAuthProvider();
+
+  document.getElementById('loginGoogle').onclick = () => auth.signInWithPopup(googleProvider);
+  document.getElementById('loginGithub').onclick = () => auth.signInWithPopup(githubProvider);
+  document.getElementById('logout').onclick = () => auth.signOut();
+
+  auth.onAuthStateChanged(user => {
+    document.getElementById('loginGoogle').classList.toggle('hidden', !!user);
+    document.getElementById('loginGithub').classList.toggle('hidden', !!user);
+    document.getElementById('logout').classList.toggle('hidden', !user);
+
+    if (user) {
+      // Auto-create wallet
+      let wallet = localStorage.getItem('wallet_' + user.uid);
+      if (!wallet) {
+        wallet = 'RTC-' + crypto.randomUUID().replaceAll('-', '').slice(0, 32);
+        localStorage.setItem('wallet_' + user.uid, wallet);
+        localStorage.setItem('balance_' + user.uid, '0.0000');
+      }
+      document.getElementById('walletAddress').innerText = wallet;
+      document.getElementById('balance').innerText = localStorage.getItem('balance_' + user.uid) + ' RTC';
+    }
+  });
+    document.getElementById('loginGithub').classList.toggle('hidden', !!user);
+    document.getElementById('logout').classList.toggle('hidden', !user);
+  });
+
+  function showTab(tab) {
+    document.getElementById('wallet').classList.add('hidden');
+    document.getElementById('mining').classList.add('hidden');
+    document.getElementById(tab).classList.remove('hidden');
+  }
+</script>
+</body>
+</html>
